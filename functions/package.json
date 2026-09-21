@@ -1,0 +1,29 @@
+{
+  "name": "house-of-siyas-functions",
+  "description": "Serverless Cloud Functions foundation for House of SIYA's",
+  "scripts": {
+    "lint": "eslint .",
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "serve": "npm run build && firebase emulators:start --only functions",
+    "shell": "npm run build && firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions"
+  },
+  "engines": {
+    "node": "20"
+  },
+  "main": "lib/index.js",
+  "dependencies": {
+    "firebase-admin": "^13.1.0",
+    "firebase-functions": "^6.3.0"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.2",
+    "@types/mocha": "^10.0.10",
+    "mocha": "^11.8.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.0"
+  },
+  "private": true
+}

@@ -1,0 +1,34 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner() {
+      return isAuthenticated() && request.auth.token.role == 'owner';
+    }
+
+    function isStaff() {
+      return isAuthenticated() && (request.auth.token.role == 'owner' || request.auth.token.role == 'manager');
+    }
+
+    function isValidFileSize() {
+      // 10 MB per file limit
+      return request.resource.size <= 10 * 1024 * 1024;
+    }
+
+    function isValidContentType() {
+      return request.resource.contentType.matches('image/.*') ||
+             request.resource.contentType == 'application/pdf';
+    }
+
+    // Business scoped file storage
+    match /businesses/{businessId}/{allPaths=**} {
+      allow read: if isStaff();
+      allow write: if isStaff() && isValidFileSize() && isValidContentType();
+      allow delete: if isOwner();
+    }
+  }
+}

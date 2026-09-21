@@ -1,0 +1,161 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions for zero-trust RBAC
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner() {
+      return isAuthenticated() && request.auth.token.role == 'owner';
+    }
+
+    function isManager() {
+      return isAuthenticated() && request.auth.token.role == 'manager';
+    }
+
+    function isAuthorizedStaff() {
+      return isOwner() || isManager();
+    }
+
+    // Single Business Root Match
+    match /businesses/{businessId} {
+      
+      // Allow read business doc to staff
+      allow read: if isAuthorizedStaff();
+      allow write: if isOwner();
+
+      // Settings: Owner only
+      match /appSettings/{settingId} {
+        allow read: if isAuthorizedStaff();
+        allow write: if isOwner();
+      }
+
+      // User Accounts & Device Management
+      match /users/{userId} {
+        allow read: if isAuthorizedStaff();
+        allow write: if isOwner() || (isAuthenticated() && request.auth.uid == userId);
+
+        match /devices/{deviceId} {
+          allow read, write: if isOwner() || (isAuthenticated() && request.auth.uid == userId);
+        }
+      }
+
+      // Offline Sequence Range Allocations: Staff can reserve and update ranges
+      match /numberingAllocations/{deviceId} {
+        allow read, write: if isAuthorizedStaff();
+      }
+
+      // Customers: Staff can read and create/update. Only Owner can archive. No hard delete.
+      match /customers/{customerId} {
+        allow read: if isAuthorizedStaff();
+        allow create, update: if isAuthorizedStaff() && 
+          (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['status']) || isOwner());
+        allow delete: if false;
+
+        match /notesHistory/{noteId} {
+          allow read, create: if isAuthorizedStaff();
+          allow update, delete: if isOwner();
+        }
+      }
+
+      // Measurement Templates: Configurable by Owner only. Managers can read.
+      match /measurementTemplates/{templateId} {
+        allow read: if isAuthorizedStaff();
+        allow write: if isOwner();
+      }
+
+      // Measurement Sets: Staff can read and create. Cannot be overwritten.
+      match /measurementSets/{measurementId} {
+        allow read, create: if isAuthorizedStaff();
+        allow update, delete: if isOwner();
+      }
+
+      // Services Catalogue: Read by staff, write by Owner only
+      match /services/{serviceId} {
+        allow read: if isAuthorizedStaff();
+        allow write: if isOwner();
+      }
+
+      // Orders (Operational data): Staff can read and create/update. No hard delete.
+      match /orders/{orderId} {
+        allow read, create, update: if isAuthorizedStaff();
+        allow delete: if false;
+
+        match /orderActivities/{activityId} {
+          allow read, create: if isAuthorizedStaff();
+          allow update, delete: if isOwner();
+        }
+
+        // DECOUPLED FINANCIAL SUMMARY: Owner READ ONLY. Manager NO ACCESS.
+        match /financials/summary {
+          allow read: if isOwner();
+          allow write: if false; // Only updated via server-side transactions / admin SDK
+        }
+      }
+
+      // Order Line Items: Staff operational access
+      match /orderItems/{itemId} {
+        allow read, write: if isAuthorizedStaff();
+        allow delete: if isOwner();
+      }
+
+      // Payments: Owner has full read/write. Manager cannot read historical payment lists!
+      match /payments/{paymentId} {
+        allow read: if isOwner();
+        // Writes allowed via serverless Cloud Function or Owner direct
+        allow write: if isOwner();
+      }
+
+      // Refunds & Customer Credits: Owner Only
+      match /refunds/{refundId} {
+        allow read, write: if isOwner();
+      }
+      match /customerCredits/{creditId} {
+        allow read, write: if isOwner();
+      }
+
+      // Documents (Invoices, Receipts): Owner Only. Managers cannot generate or read receipts.
+      match /documents/{documentId} {
+        allow read, write: if isOwner();
+      }
+
+      // Rental Catalogue: Staff operational access. Write by Owner.
+      match /rentalItems/{itemId} {
+        allow read: if isAuthorizedStaff();
+        allow write: if isOwner();
+      }
+
+      // Rental Transactions: Staff can reserve, issue, and return.
+      match /rentals/{rentalId} {
+        allow read, create, update: if isAuthorizedStaff();
+        allow delete: if isOwner();
+      }
+
+      // Alterations: Staff operational access
+      match /alterations/{alterationId} {
+        allow read, create, update: if isAuthorizedStaff();
+        allow delete: if isOwner();
+      }
+
+      // Classes & Student Fee Tracking: OWNER ONLY. Managers have zero access.
+      match /students/{studentId} {
+        allow read, write: if isOwner();
+
+        match /classPayments/{paymentId} {
+          allow read, write: if isOwner();
+        }
+        match /financials/summary {
+          allow read, write: if isOwner();
+        }
+      }
+
+      // Audit Logs: System Write Only (via Admin SDK), Owner Read Only.
+      match /auditLogs/{auditId} {
+        allow read: if isOwner();
+        allow write: if false;
+      }
+    }
+  }
+}

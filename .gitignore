@@ -1,0 +1,17 @@
+# Flutter/Dart
+**/siyas_app/.dart_tool/
+**/siyas_app/.pub/
+**/siyas_app/.pub-cache/
+**/siyas_app/build/
+**/siyas_app/.flutter-plugins-dependencies
+
+# Node/Functions
+functions/node_modules/
+**/node_modules/
+
+# Logs & Temp
+*.log
+*.tmp
+.DS_Store
+.idea/
+.vscode/

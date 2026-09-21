@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "default": "siyasapp-dev-509309",
+    "dev": "siyasapp-dev-509309",
+    "prod": "siyasapp-509309"
+  }
+}

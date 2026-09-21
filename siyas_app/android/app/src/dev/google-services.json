@@ -1,0 +1,29 @@
+﻿{
+  " project_info\: {
+ \project_number\: \171601967308\,
+ \project_id\: \siyasapp-dev-509309\,
+ \storage_bucket\: \siyasapp-dev-509309.firebasestorage.app\
+ },
+ \client\: [
+ {
+ \client_info\: {
+ \mobilesdk_app_id\: \1:171601967308:android:865089c4de34cee6686a69\,
+ \android_client_info\: {
+ \package_name\: \com.houseofsiyas.siyas_app.dev\
+ }
+ },
+ \oauth_client\: [],
+ \api_key\: [
+ {
+ \current_key\: \AIzaSyBWrjW82lef23zQaJrMED-rFeG5-NHGhOQ\
+ }
+ ],
+ \services\: {
+ \appinvite_service\: {
+ \other_platform_oauth_client\: []
+ }
+ }
+ }
+ ],
+ \configuration_version\: \1\
+}
